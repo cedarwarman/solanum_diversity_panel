@@ -61,3 +61,4 @@ sum(current_accessions$accession %in% alonge_accessions_in_razifard$Accession)
 # Number I have in Razifard full set? 40
 sum(current_accessions$accession %in% alonge_accessions_in_razifard_full$Accession)
 
+

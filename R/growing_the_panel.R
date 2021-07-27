@@ -24,6 +24,38 @@ accessions <- read.table(file = file.path(getwd(),
 # for NAs in the expression or it returns NAs too)
 accessions <- accessions[is.na(accessions$TGRC) | accessions$TGRC != "LA4791", ]
 
+# # TODO Adding accessions that weren't in the original table, mostly these 
+# # are the PGRP GTTR lines
+# to_add <- data.frame(accession = c(),
+#   Assigned_population = c(),
+#   Country = c(),
+#   Province = c(),
+#   Collecting_locality = c(),
+#   Local_name = c(),                
+#   Notes_from_original_collections = c(),
+#   Latitude = c(),
+#   Longitude = c(),                     
+#   part_of_varitome = c(),
+#   Species = c(),
+#   Taxon = c(),                         
+#   TGRC = c(),
+#   CC = c(),
+#   EA = c(),
+#   PI = c(),
+#   TS = c(),
+#   SV.Count = c(),
+#   SV.Collector.Rank = c(),
+#   SRA.ID = c(),
+#   Yield..bp. = c(),
+#   part_of_alonge = c(),
+#   available_usda = c(),
+#   available_tgrc = c(),
+#   have_accession = c(),
+#   have_from_matthias = c(),
+#   have_from_tgrc = c(),
+#   varitome_ordered_from_tgrc = c())
+# 
+# rbind(accessions, to_add)
 
 # This is the manual record of seed packets that we have.
 gs4_deauth()
@@ -90,7 +122,7 @@ packet_id_matches <- packet_id_matches %>%
 # I should really be counting how many packet_list rows each accession row 
 # matches. This method counts how many rows of packet_list each row of 
 # accessions matches. I know appending vectors is slow, but it's ok here.
-match_sum_df <- data.frame(accessions = c(), match_sum = c())
+match_sum_df <- data.frame()
 for (n in seq(1, nrow(accessions))){
   loop_row <- accessions[n, ]
   match_sum <- nrow(packet_list[packet_list$Accession_ID %in% loop_row$accession |
@@ -100,14 +132,24 @@ for (n in seq(1, nrow(accessions))){
                     packet_list$Accession_ID %in% loop_row$TS |
                     packet_list$Accession_ID %in% loop_row$EA |
                     packet_list$Accession_ID %in% loop_row$Local_name, ])
-  append_row <- data.frame(accessions = loop_row$accession, match_sum = match_sum)
+  append_row <- data.frame(accessions = loop_row$accession, 
+                           TGRC = loop_row$TGRC,
+                           match_sum = match_sum)
   match_sum_df <- rbind(match_sum_df, append_row)
 }
 
 # Showing the ones with duplications
 multiple_packets <- match_sum_df[match_sum_df$match_sum > 1, ]
 
+# Marking the duplicated seed packets
+packet_list$is_duplicated <- FALSE
+packet_list$is_duplicated[packet_list$Accession_ID %in% multiple_packets$accessions |
+                          packet_list$Accession_ID %in% multiple_packets$TGRC] <- TRUE
 
+
+
+
+sum(packet_list$is_duplicated)
 
 
 

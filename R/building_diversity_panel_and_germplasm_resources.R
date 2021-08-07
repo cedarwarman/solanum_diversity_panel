@@ -45,9 +45,9 @@ accessions$part_of_varitome <- TRUE
 
 # Adding the Alonge accessions. 30 are already part of the Varitome, so the 
 # full join just adds their metadata columns. In the future I should look to 
-# see if there are any conflicts with the subpopulatin designations.
+# see if there are any conflicts with the subpopulation designations.
 alonge$part_of_alonge <- TRUE
-accessions <- full_join(accessions, alonge, by = "accession")
+accessions <- full_join(accessions, alonge, by = "accession") # is this where the dups come from??
 accessions$part_of_varitome[is.na(accessions$part_of_varitome)] <- FALSE
 accessions$part_of_alonge[is.na(accessions$part_of_alonge)] <- FALSE
 

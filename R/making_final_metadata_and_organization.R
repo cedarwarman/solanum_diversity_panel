@@ -4,8 +4,7 @@
 # scripts, so I'll make a clean one here. My goal is to combine primary 
 # spreadsheets from the literature and the TGRC and make a definitive list of 
 # all the accessions I have along with their associated metadata. I'll then 
-# save this list to a Google sheet, then load it in "growing_the_panel.R" for 
-# further processing into separate waves for planting.
+# split them into waves and give them all CW numbers.
 
 library(tidyverse)
 library(readxl)
@@ -189,9 +188,11 @@ razifard <- razifard %>%
   mutate(name_TGRC = coalesce(name_TGRC.x, name_TGRC.y), .keep = 'unused') %>%
   relocate(name_TGRC)
 
-# Manually adding the other two names
+# Manually adding the other four names
 razifard$name_TGRC[razifard$name_other == "CATIE-11106-1"] <- "LA4790"
 razifard$name_TGRC[razifard$name_other == "PAS014479"] <- "LA4791"
+razifard$name_TGRC[razifard$name_other == "Tegucigalpa"] <- "LA4792"
+razifard$name_TGRC[razifard$name_other == "Voyage"] <- "LA4793"
 
 
 # Joining -----------------------------------------------------------------
@@ -221,6 +222,22 @@ razifard_name_other <- razifard[ , c(-(1:9))]
 joined_pi <- inner_join(alonge, razifard_name_pi, by = "name_PI", na_matches = "never")
 joined_bgv <- inner_join(alonge, razifard_name_bgv, by = "name_BGV", na_matches = "never")
 joined_other <- inner_join(alonge, razifard_name_other, by = "name_other", na_matches = "never")
+
+# Fixing the names that got dropped from the joined df that were present in 
+# Razifard (just doing the bgv's, hopefully this isn't a problem elsewhere)
+razifard_bgv_la_key <- razifard[razifard$name_BGV %in% c("BGV006175", "BGV006232", "BGV006336", "BGV006370",
+                                                         "BGV006454", "BGV006767", "BGV006768", "BGV006775",
+                                                         "BGV006852", "BGV006865", "BGV006906", "BGV007109",
+                                                         "BGV007152", "BGV007198", "BGV007931", "BGV007981",
+                                                         "BGV007989", "BGV007992", "BGV008042", "BGV008108",
+                                                         "BGV008189", "BGV008225", "BGV012615", "BGV012626",
+                                                         "BGV013161"), ]
+razifard_bgv_la_key <- razifard_bgv_la_key[ , c(1, 6)]
+# razifard_bgv_la_key <- razifard_bgv_la_key[complete.cases(razifard_bgv_la_key), ]
+joined_bgv <- joined_bgv[ , c(2:41)]
+joined_bgv <- inner_join(joined_bgv, razifard_bgv_la_key)
+joined_bgv <- joined_bgv %>% 
+  relocate(c(name_TGRC))
 
 # Testing just joining by accession (they match)
 # test_join <- inner_join(alonge, razifard, by = c("name_original_alonge" = "name_original_razifard"))
@@ -264,10 +281,7 @@ to_add <- data.frame("name_TGRC" = c("LA0490",
                                    "LA3320",
                                    "LA4345",
                                    "LA4355",
-                                   "LA4715",
-                                   "LA4790",
-                                   "LA4792",
-                                   "LA4793"),
+                                   "LA4715"),
                      "name_CC" = c(NA),
                      "name_EA" = c(NA),
                      "name_PI" = c(NA),
@@ -285,10 +299,7 @@ to_add <- data.frame("name_TGRC" = c("LA0490",
                                       "Hotset",
                                       "Heinz",
                                       "Gold Nugget",
-                                      "unknown",
-                                      "unknown",
-                                      "Tegucigalpa",
-                                      "Voyage"),
+                                      "unknown"),
                      "name_original_alonge" = c(NA),
                      "name_original_razifard" = c(NA),
                      "part_of_razifard" = c(FALSE),
@@ -302,10 +313,7 @@ to_add <- data.frame("name_TGRC" = c("LA0490",
                                    "SLL",
                                    "SLL",
                                    "SLL",
-                                   "SP",
-                                   "SLL",
-                                   "SLL",
-                                   "SLL"),
+                                   "SP"),
                      "Taxon" = c(NA),
                      "SV Count" = c(NA),
                      "SV Collector Rank" = c(NA),
@@ -359,16 +367,18 @@ accessions$species[grepl("CHE", accessions$alonge_species)] <- "cheesmaniae"
 accessions$species[accessions$name_TGRC == "LA4768"] <- "lycopersicum" # species from TGRC
 accessions$species[accessions$name_BGV == "BGV006148"] <- "pimpinellifolium" # species from TGRC, intermediate
 accessions$species[accessions$name_TGRC == "LA0767"] <- "lycopersicum" # species from TGRC
+accessions$species[accessions$name_TGRC == "LA4790"] <- "lycopersicum" # species from TGRC 
+accessions$species[accessions$name_TGRC == "LA4793"] <- "lycopersicum" # species from TGRC 
 
 # Put this packet aside: CATIE-11106-1
 # accessions <- accessions[accessions$accession != "CATIE-11106-1", ]
 
-# Removing an accession that wasn't sent 
-accessions <- accessions[is.na(accessions$name_other) | accessions$name_other != "Voyage", ]
+# Removing an accession that wasn't sent (actually it was)
+# accessions <- accessions[is.na(accessions$name_other) | accessions$name_other != "Voyage", ]
 
-# CATIE and Voyage are problems. What happened with CATIE again?? Removing 
+# CATIE. What happened with CATIE again?? Removing 
 # CATIE for now, but check.
-accessions <- accessions[is.na(accessions$name_other) | accessions$name_other != "CATIE-11106-1", ]
+# accessions <- accessions[is.na(accessions$name_other) | accessions$name_other != "CATIE-11106-1", ]
 
 # Problems
 nrow(accessions[is.na(accessions$species), ]) # Should be none
@@ -379,7 +389,7 @@ nrow(accessions[is.na(accessions$species), ]) # Should be none
 # the table of accessions from Alonge and Razifard.
 
 gs4_deauth()
-packet_list <- read_sheet("1RMDwiJy14HxPH7kY3pwske3iXLqL8N3WLHIl2o0WQW8")
+packet_list <- read_sheet("1RMDwiJy14HxPH7kY3pwske3iXLqL8N3WLHIl2o0WQW8") # not actually a list, technically
 packet_list <- packet_list[ , 1]
 colnames(packet_list) <- c("packet_name")
 
@@ -395,6 +405,53 @@ accessions <- accessions %>%
   relocate(c(packet_name_1, packet_name_2))
 
 
+# Doing a loop to match packets to accessions rows. Allows more than once 
+# packet to match the same accessions row, because of duplicates.
+for (n in seq(1, nrow(packet_list))){
+  # Grabbing a row of packet_list
+  packet <- packet_list$packet_name[n]
+  # print(packet)
+  
+  row_counter = 0
+  
+  # Checking for matches in the name columns of each row
+  for (x in seq(1, nrow(accessions))){
+    accessions_row <- accessions[x, ]
+    if (packet %in% accessions_row$name_TGRC[1] | 
+        packet %in% accessions_row$name_CC[1] | 
+        packet %in% accessions_row$name_EA[1] | 
+        packet %in% accessions_row$name_PI[1] | 
+        packet %in% accessions_row$name_TS[1] | 
+        packet %in% accessions_row$name_BGV[1] | 
+        packet %in% accessions_row$name_FLA[1] | 
+        packet %in% accessions_row$name_LYC[1] | 
+        packet %in% accessions_row$name_TR[1] | 
+        packet %in% accessions_row$name_other[1]){
+      
+      print(paste0("found packet in row ", x))
+      
+      # Checking to see if packet_name_1 is available
+      if (is.na(accessions_row$packet_name_1)){
+        print("Adding packet to packet_name_1")
+        accessions[x, "packet_name_1"] <- packet
+      } else if (is.na(accessions_row$packet_name_2)){
+        print("Adding packet to packet_name_2")
+        accessions[x, "packet_name_2"] <- packet
+      } else {
+        print("RAN OUT OF PACKET COLUMNS")
+      }
+
+      row_counter = row_counter + 1
+      # var = 1
+    }
+  }
+  
+  # Troubleshooting
+  # if (row_counter > 1){
+  #   # print(paste0("DID NOT FIND PACKET: ", packet))
+  #   print(paste0(packet, " MATCHED ", row_counter, " ROWS"))
+  # }
+}
 
 
 

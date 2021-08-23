@@ -9,6 +9,10 @@
 library(tidyverse)
 library(readxl)
 library(googlesheets4)
+library(fuzzyjoin)
+
+# Reproducibility
+set.seed(6)
 
 
 # Loading the data --------------------------------------------------------
@@ -42,7 +46,7 @@ tgrc_varitome <- read_excel(file.path(getwd(), "data", "TGRC_Varitome.xlsx"))
 # Packet list
 # Load packet list from growing_the_panel
 
-# Organizing alonge and razifard ------------------------------------------
+# Organizing Alonge and Razifard ------------------------------------------
 # I'll take a different strategy this time, working off the packet list to 
 # only include rows from razifard, alonge, and the tgrc_varitome that are 
 # present in the packet list.
@@ -169,7 +173,7 @@ for (n in seq(1, nrow(razifard))) {
 }
 
 
-# Adding in the tgrc_varitome data ----------------------------------------
+# Adding in the TGRC Varitome data ----------------------------------------
 # This is all well and good, but adding the other names in from the 
 # tgrc_varitome df to Razifard might reveal some of the dups.
 tgrc_varitome_key <- data.frame(name_TGRC = tgrc_varitome$AccessionNum,
@@ -453,6 +457,94 @@ for (n in seq(1, nrow(packet_list))){
   # }
 }
 
+
+# Adding existing CW names ------------------------------------------------
+# I added CW names to the first round by hand, so I'll update the accessions 
+# data frame with those here.
+
+# Getting the names I already assigned
+gs4_deauth()
+cw_list <- read_sheet("1g-Qo17ZPSpwDR89bSBLHQcYLyfxcO8u9ehQ_M8W3DCw")
+cw_list <- cw_list[ , c(1:2)]
+colnames(cw_list) <- c("name_CW", "packet_name")
+
+# Removing the accessions that I don't have (and keeping a table of the 
+# missing ones in case I need it in the future)
+missing_accessions <- accessions[is.na(accessions$packet_name_1) & is.na(accessions$packet_name_2), ]
+accessions <- accessions[!(is.na(accessions$packet_name_1) & is.na(accessions$packet_name_2)), ]
+
+# Making a new column for the fuzzy join
+accessions <- accessions %>%
+  unite(united_names, packet_name_1:name_original_razifard, 
+        remove = FALSE,
+        na.rm = TRUE) %>%
+  relocate(united_names)
+
+# Fuzzy joining
+accessions <- accessions %>% 
+  regex_left_join(cw_list, by = c(united_names = "packet_name")) %>%
+  relocate(name_CW) %>%
+  select(!c(united_names, packet_name))
+
+
+# Adding new CW names -----------------------------------------------------
+# Now I'll add the rest of the CW names. I want them to just be random at 
+# this point (the first set wasn't random). I will add new IDs using this 
+# convention:
+# 
+# CW0000 – CW0999: S. lycopersicum
+# CW1000 – CW1999: S. pimpinellifolium
+# CW2000 – CW2999: S. cheesmaniae
+# CW3000 – CW3999: S. galapagense
+
+# Function to add the new CW names
+add_cw_names <- function(input_df, input_species) {
+  if (input_species == "lycopersicum") {
+    cw_prefix = "CW0"
+  } else if (input_species == "pimpinellifolium") {
+    cw_prefix = "CW1"
+  } else if (input_species == "cheesmaniae") {
+    cw_prefix = "CW2"
+  } else if (input_species == "galapagense") {
+    cw_prefix = "CW3"
+  } else {
+    stop("Species error")
+  }
+  
+  df <- input_df[input_df$species == input_species, ]
+  df <- df[order(df$name_CW), ]
+  
+  df_old <- df[!is.na(df$name_CW), ] # Getting accessions with CW name
+  df_new <- df[is.na(df$name_CW), ] # Getting accessions without CW name
+  df_new <- df_new[sample(1:nrow(df_new)), ] # Randomizing 
+  
+  # Assigns new CW names, starting where the existing names left off and 
+  # ending at the total number of accessions for this species
+  df_new$name_CW <- paste0(cw_prefix, sprintf('%0.3d', nrow(df_old):(nrow(df) - 1)))
+  
+  # Combining the old and new back together
+  df <- rbind(df_old, df_new)
+  
+  return(df)
+}
+
+# Adding the new CW names one species at a time
+accessions_lyc <- add_cw_names(accessions, "lycopersicum")
+accessions_pim <- add_cw_names(accessions, "pimpinellifolium")
+accessions_che <- add_cw_names(accessions, "cheesmaniae")
+accessions_gal <- add_cw_names(accessions, "galapagense")
+
+# Combining back together
+accessions <- rbind(accessions_lyc,
+                    accessions_pim,
+                    accessions_che,
+                    accessions_gal)
+
+
+# Looking at the duplicate packets ----------------------------------------
+# I need to figure out which packets are duplicated and which of these are 
+# from Esther. Ideally I'll not use her seeds for most of them, then test 
+# the germination of the ones without dups and ask her to send more. 
 
 
 

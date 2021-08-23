@@ -487,10 +487,10 @@ accessions <- accessions %>%
   select(!c(united_names, packet_name))
 
 
-# Adding new CW names -----------------------------------------------------
+# Adding new CW names and wave numbers ------------------------------------
 # Now I'll add the rest of the CW names. I want them to just be random at 
-# this point (the first set wasn't random). I will add new IDs using this 
-# convention:
+# this point (the first set wasn't random). I will add the wave numbers here 
+# as well. The new IDs will use this convention:
 # 
 # CW0000 – CW0999: S. lycopersicum
 # CW1000 – CW1999: S. pimpinellifolium
@@ -515,12 +515,21 @@ add_cw_names <- function(input_df, input_species) {
   df <- df[order(df$name_CW), ]
   
   df_old <- df[!is.na(df$name_CW), ] # Getting accessions with CW name
+  df_old <- df_old %>% # Putting in the wave
+    mutate(wave = 1) %>%
+    relocate(wave)
+    
   df_new <- df[is.na(df$name_CW), ] # Getting accessions without CW name
   df_new <- df_new[sample(1:nrow(df_new)), ] # Randomizing 
   
   # Assigns new CW names, starting where the existing names left off and 
   # ending at the total number of accessions for this species
   df_new$name_CW <- paste0(cw_prefix, sprintf('%0.3d', nrow(df_old):(nrow(df) - 1)))
+  
+  # Adding an empty column for the wave for the new names
+  df_new <- df_new %>%
+    mutate(wave = NA) %>%
+    relocate(wave)
   
   # Combining the old and new back together
   df <- rbind(df_old, df_new)
@@ -539,6 +548,35 @@ accessions <- rbind(accessions_lyc,
                     accessions_pim,
                     accessions_che,
                     accessions_gal)
+
+# Adding wave 2 info
+accession_ids_lyc <- paste0("CW0", sprintf('%0.3d', 19:37)) # lycopersicum
+accession_ids_pim <- paste0("CW1", sprintf('%0.3d', 4:7)) # pimpinellifolium
+accession_ids_che <- "CW2001" # cheesmaniae
+accession_ids_gal <- "CW3001" # galapagense
+
+accession_ids <- c(accession_ids_lyc,
+                   accession_ids_pim,
+                   accession_ids_che,
+                   accession_ids_gal)
+
+accessions$wave[accessions$name_CW %in% accession_ids] <- 2
+
+
+# Uploading to a google sheet for planting --------------------------------
+# I'll upload a simplified version of the accessions data frame to a Google 
+# sheet here.
+simple_accessions <- accessions %>%
+  select(c(wave:packet_name_2, species))
+
+# Writes to the sheet.
+# gs4_auth()
+# for (loop_wave in unique(simple_accessions$wave[!is.na(simple_accessions$wave)])) {
+#   simple_accessions_subset <- simple_accessions[simple_accessions$wave %in% loop_wave, ]
+#   write_sheet(simple_accessions_subset,
+#               ss = "1MxPu5Mf_2YxfMeR74Bc80K2b_xUm1mrRbAEZFXfH1ec",
+#               sheet = paste0("wave_", loop_wave))
+# }
 
 
 # Looking at the duplicate packets ----------------------------------------

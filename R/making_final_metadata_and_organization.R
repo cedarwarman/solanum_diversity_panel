@@ -562,8 +562,8 @@ accession_ids <- c(accession_ids_lyc,
 
 accessions$wave[accessions$name_CW %in% accession_ids] <- 2
 
-# Adding wave 3 info (previous wave + 18 for lyc)
-accession_ids_lyc <- paste0("CW0", sprintf('%0.3d', 38:57)) # lycopersicum
+# Adding wave 3 info (previous wave + 1 + 18 for lyc)
+accession_ids_lyc <- paste0("CW0", sprintf('%0.3d', 38:56)) # lycopersicum
 accession_ids_pim <- paste0("CW1", sprintf('%0.3d', 8:11)) # pimpinellifolium
 accession_ids_che <- "CW2002" # cheesmaniae
 accession_ids_gal <- "CW3002" # galapagense
@@ -574,6 +574,19 @@ accession_ids <- c(accession_ids_lyc,
                    accession_ids_gal)
 
 accessions$wave[accessions$name_CW %in% accession_ids] <- 3
+
+# Adding wave 4 info (previous wave + 1 + 18 for lyc)
+accession_ids_lyc <- paste0("CW0", sprintf('%0.3d', 57:75)) # lycopersicum
+accession_ids_pim <- paste0("CW1", sprintf('%0.3d', 12:15)) # pimpinellifolium
+accession_ids_che <- "CW2003" # cheesmaniae
+accession_ids_gal <- "CW3003" # galapagense
+
+accession_ids <- c(accession_ids_lyc,
+                   accession_ids_pim,
+                   accession_ids_che,
+                   accession_ids_gal)
+
+accessions$wave[accessions$name_CW %in% accession_ids] <- 4
 
 
 # Uploading to a google sheet for planting --------------------------------
@@ -587,12 +600,17 @@ gs4_auth()
 
 # Make it check first and not overwrite the old ones (for the highlighting)
 # for (loop_wave in unique(simple_accessions$wave[!is.na(simple_accessions$wave)])) {
-#   simple_accessions_subset <- simple_accessions[simple_accessions$wave %in% loop_wave, ]
+# #   simple_accessions_subset <- simple_accessions[simple_accessions$wave %in% loop_wave, ]
 #   write_sheet(simple_accessions_subset,
 #               ss = "1MxPu5Mf_2YxfMeR74Bc80K2b_xUm1mrRbAEZFXfH1ec",
 #               sheet = paste0("wave_", loop_wave))
 # }
 
+# Version for just one wave
+simple_accessions_subset <- simple_accessions[simple_accessions$wave %in% 4, ]
+write_sheet(simple_accessions_subset,
+            ss = "1MxPu5Mf_2YxfMeR74Bc80K2b_xUm1mrRbAEZFXfH1ec",
+            sheet = "wave_4")
 
 # Looking at the duplicate packets ----------------------------------------
 # I need to figure out which packets are duplicated and which of these are 

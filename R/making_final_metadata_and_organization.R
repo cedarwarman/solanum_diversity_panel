@@ -615,6 +615,19 @@ accession_ids <- c(accession_ids_lyc,
 
 accessions$wave[accessions$name_CW %in% accession_ids] <- 6
 
+# Adding wave 7 info (previous wave + 1 + 19 for lyc, then add CW0000 (Heinz) manually)
+# lyc increases here because cheesmaniae are now finished
+accession_ids_lyc <- paste0("CW0", sprintf('%0.3d', 113:132)) # lycopersicum
+accession_ids_pim <- paste0("CW1", sprintf('%0.3d', 24:27)) # pimpinellifolium
+accession_ids_che <- "" # cheesmaniae # None so skip next time
+accession_ids_gal <- "" # galapagense # None
+
+accession_ids <- c(accession_ids_lyc,
+                   accession_ids_pim,
+                   accession_ids_che,
+                   accession_ids_gal)
+
+accessions$wave[accessions$name_CW %in% accession_ids] <- 7
 
 # Uploading to a google sheet for planting --------------------------------
 # I'll upload a simplified version of the accessions data frame to a Google 
@@ -634,10 +647,10 @@ gs4_auth()
 # }
 
 # Version for just one wave
-simple_accessions_subset <- simple_accessions[simple_accessions$wave %in% 6, ]
+simple_accessions_subset <- simple_accessions[simple_accessions$wave %in% 7, ]
 write_sheet(simple_accessions_subset,
             ss = "1MxPu5Mf_2YxfMeR74Bc80K2b_xUm1mrRbAEZFXfH1ec",
-            sheet = "wave_6")
+            sheet = "wave_7")
 
 # Looking at the duplicate packets ----------------------------------------
 # I need to figure out which packets are duplicated and which of these are 

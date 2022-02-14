@@ -658,7 +658,7 @@ accessions$wave[accessions$name_CW %in% accession_ids] <- 9
 
 # Adding wave 10 info. The remaining lycopersicum and pimpinellifolium 
 # accessions, plus some of the accessions from wave 1.
-# Manually added CW0000-CW0007
+# Manually added CW0000-CW0008
 # Manually added CW1001-CW1002 (CW1000, CW1003, CW1004 are already in the greenhouse)
 accession_ids_lyc <- paste0("CW0", sprintf('%0.3d', 173:181)) # lycopersicum
 accession_ids_pim <- paste0("CW1", sprintf('%0.3d', 36:40)) # pimpinellifolium

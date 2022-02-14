@@ -656,6 +656,23 @@ accession_ids <- c(accession_ids_lyc,
 
 accessions$wave[accessions$name_CW %in% accession_ids] <- 9
 
+# Adding wave 10 info. The remaining lycopersicum and pimpinellifolium 
+# accessions, plus some of the accessions from wave 1.
+# Manually added CW0000-CW0007
+# Manually added CW1001-CW1002 (CW1000, CW1003, CW1004 are already in the greenhouse)
+accession_ids_lyc <- paste0("CW0", sprintf('%0.3d', 173:181)) # lycopersicum
+accession_ids_pim <- paste0("CW1", sprintf('%0.3d', 36:40)) # pimpinellifolium
+accession_ids_che <- "" # cheesmaniae # None so skip next time
+accession_ids_gal <- "" # galapagense # None
+
+accession_ids <- c(accession_ids_lyc,
+                   accession_ids_pim,
+                   accession_ids_che,
+                   accession_ids_gal)
+
+accessions$wave[accessions$name_CW %in% accession_ids] <- 10
+
+
 # Writing the big accessions table to a Google sheet for other projects
 # write_sheet(accessions,
             # ss = "1V2kH8G4tfYsYqnYb6bVHpGjwwkjd9le0arGBJ2o4r8s")
@@ -680,10 +697,10 @@ gs4_auth()
 # }
 
 # Version for just one wave
-simple_accessions_subset <- simple_accessions[simple_accessions$wave %in% 9, ]
+simple_accessions_subset <- simple_accessions[simple_accessions$wave %in% 10, ]
 write_sheet(simple_accessions_subset,
             ss = "1MxPu5Mf_2YxfMeR74Bc80K2b_xUm1mrRbAEZFXfH1ec",
-            sheet = "wave_9")
+            sheet = "wave_10")
 
 # Looking at the duplicate packets ----------------------------------------
 # I need to figure out which packets are duplicated and which of these are 
